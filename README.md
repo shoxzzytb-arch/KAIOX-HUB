@@ -1,5 +1,5 @@
 --============================================================
--- KAIOX HUB — ATUALIZADO (Fly removido, Toggle +, Menu móvel, Crédito)
+-- KAIOX HUB + TELA DE CARREGAMENTO (10s)
 --============================================================
 
 local Players = game:GetService("Players")
@@ -10,22 +10,139 @@ local LP = Players.LocalPlayer
 local Mouse = LP:GetMouse()
 
 --============================================================
--- GUI BASE
+-- *** TELA DE CARREGAMENTO ***
+--============================================================
+
+local LoadingGui = Instance.new("ScreenGui", LP:WaitForChild("PlayerGui"))
+LoadingGui.ResetOnSpawn = false
+LoadingGui.IgnoreGuiInset = true
+LoadingGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+
+-- Fundo preto
+local Black = Instance.new("Frame", LoadingGui)
+Black.Size = UDim2.new(1,0,1,0)
+Black.BackgroundColor3 = Color3.fromRGB(0,0,0)
+Black.ZIndex = 10
+
+-- Foto
+local Photo = Instance.new("ImageLabel", Black)
+Photo.Size = UDim2.new(0,300,0,300)
+Photo.Position = UDim2.new(0.5,-150,0.28,-150)
+Photo.BackgroundTransparency = 1
+Photo.ZIndex = 11
+Photo.Image = "rbxassetid://77189072242089"
+
+-- Texto CARREGANDO:
+local LoadingTxt = Instance.new("TextLabel", Black)
+LoadingTxt.Size = UDim2.new(0,300,0,60)
+LoadingTxt.Position = UDim2.new(0.5,-150,0.57,0)
+LoadingTxt.BackgroundTransparency = 1
+LoadingTxt.TextColor3 = Color3.fromRGB(255,255,255)
+LoadingTxt.Font = Enum.Font.GothamBold
+LoadingTxt.TextScaled = true
+LoadingTxt.ZIndex = 11
+LoadingTxt.Text = "CARREGANDO:"
+
+-- Mensagens de 5 em 5s
+local msgs = {
+	"Iniciando scripts...",
+	"Carregando interface...",
+	"Otimizando performance...",
+	"Preparando ambiente...",
+	"Quase lá..."
+}
+
+task.spawn(function()
+	while Black.Parent do
+		for _,m in ipairs(msgs) do
+			LoadingTxt.Text = "CARREGANDO: " .. m
+			task.wait(5)
+		end
+	end
+end)
+
+-- Estrelas infinitas
+task.spawn(function()
+	while Black.Parent do
+		local star = Instance.new("Frame", Black)
+		star.Size = UDim2.new(0,5,0,5)
+		star.BackgroundColor3 = Color3.fromRGB(255,255,255)
+		star.Position = UDim2.new(0,-10,math.random(),0)
+		star.ZIndex = 11
+		Instance.new("UICorner", star).CornerRadius = UDim.new(1,0)
+
+		task.spawn(function()
+			for i = 0,1,0.01 do
+				star.Position = UDim2.new(i, -10, star.Position.Y.Scale, 0)
+				task.wait(0.02)
+			end
+			star:Destroy()
+		end)
+
+		task.wait(0.3)
+	end
+end)
+
+-- Barra base
+local BarBack = Instance.new("Frame", Black)
+BarBack.Size = UDim2.new(0,500,0,40)
+BarBack.Position = UDim2.new(0.5,-250,0.70,0)
+BarBack.BackgroundColor3 = Color3.fromRGB(40,40,40)
+BarBack.ZIndex = 10
+Instance.new("UICorner", BarBack).CornerRadius = UDim.new(0,10)
+
+-- Barra de progresso
+local BarFill = Instance.new("Frame", BarBack)
+BarFill.Size = UDim2.new(0,0,1,0)
+BarFill.BackgroundColor3 = Color3.fromRGB(120,0,255)
+BarFill.ZIndex = 11
+Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0,10)
+
+-- Texto %
+local Percent = Instance.new("TextLabel", Black)
+Percent.Size = UDim2.new(0,200,0,50)
+Percent.Position = UDim2.new(0.5,-100,0.63,0)
+Percent.BackgroundTransparency = 1
+Percent.TextColor3 = Color3.fromRGB(255,255,255)
+Percent.TextScaled = true
+Percent.Font = Enum.Font.GothamBold
+Percent.ZIndex = 11
+Percent.Text = "0%"
+
+-- Animação do loading (10s)
+task.spawn(function()
+	for i = 1, 100 do
+		BarFill.Size = UDim2.new(i/100,0,1,0)
+		Percent.Text = i.."%"
+		task.wait(0.10)
+	end
+	LoadingGui:Destroy()
+end)
+
+--============================================================
+-- KAIOX HUB (MESMO DE ANTES)
 --============================================================
 
 local gui = Instance.new("ScreenGui", LP:WaitForChild("PlayerGui"))
 gui.ResetOnSpawn = false
 
 --============================================================
--- BOTÃO REDONDO
+-- BOTÃO REDONDO (AGORA 12s)
 --============================================================
 
-local OpenBtn = Instance.new("ImageButton", gui)
+local OpenBtn = Instance.new("ImageButton")
 OpenBtn.Size = UDim2.new(0, 70, 0, 70)
 OpenBtn.Position = UDim2.new(0.05, 0, 0.5, 0)
 OpenBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
 OpenBtn.AutoButtonColor = true
 OpenBtn.Image = ""
+OpenBtn.Visible = false -- começa invisível
+OpenBtn.Parent = gui
+
+-- aparece depois de 12s
+task.delay(12, function()
+	OpenBtn.Visible = true
+end)
 
 local circle = Instance.new("UICorner", OpenBtn)
 circle.CornerRadius = UDim.new(1,0)
@@ -76,22 +193,12 @@ Bar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 Bar.BackgroundTransparency = 0.15
 Bar.Visible = false
 
-local BarCorner = Instance.new("UICorner", Bar)
-BarCorner.CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", Bar).CornerRadius = UDim.new(0, 12)
 
 local B1 = Instance.new("UIStroke", Bar)
 B1.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 B1.Color = Color3.fromRGB(120,0,255)
 B1.Thickness = 3
-
--- sombra
-local shadow = Instance.new("ImageLabel", Bar)
-shadow.Size = UDim2.new(1,30,1,30)
-shadow.Position = UDim2.new(0,-15,0,-15)
-shadow.BackgroundTransparency = 1
-shadow.Image = "rbxassetid://1316045217"
-shadow.ImageColor3 = Color3.fromRGB(0,0,0)
-shadow.ImageTransparency = 0.7
 
 --========== BOTÃO MOVER ==========
 local MoveBar = Instance.new("TextButton", Bar)
@@ -100,11 +207,8 @@ MoveBar.Text = "+"
 MoveBar.TextColor3 = Color3.fromRGB(255,255,255)
 MoveBar.TextScaled = true
 MoveBar.BackgroundColor3 = Color3.fromRGB(40,40,40)
+Instance.new("UICorner", MoveBar).CornerRadius = UDim.new(0,12)
 
-local mvCorner = Instance.new("UICorner", MoveBar)
-mvCorner.CornerRadius = UDim.new(0,12)
-
--- DRAG DA BARRA
 local draggingBar = false
 local dragBarStart, barStartPos
 
@@ -117,7 +221,7 @@ MoveBar.InputBegan:Connect(function(input)
 	end
 end)
 
-MoveBar.InputEnded:Connect(function(input)
+MoveBar.InputEnded:Connect(function()
 	draggingBar = false
 end)
 
@@ -146,7 +250,7 @@ task.spawn(function()
 	end
 end)
 
---========== + TOGGLE MENU ==========
+--========== + / - ==========
 local PlusBtn = Instance.new("TextButton", Bar)
 PlusBtn.Size = UDim2.new(0, 45, 1, 0)
 PlusBtn.Position = UDim2.new(0.80, 0, 0, 0)
@@ -154,11 +258,9 @@ PlusBtn.Text = "+"
 PlusBtn.TextScaled = true
 PlusBtn.TextColor3 = Color3.fromRGB(255,255,255)
 PlusBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+Instance.new("UICorner", PlusBtn).CornerRadius = UDim.new(0,12)
 
-local pc = Instance.new("UICorner", PlusBtn)
-pc.CornerRadius = UDim.new(0,12)
-
---========== FECHAR ==========
+--========== X ==========
 local CloseBtn = Instance.new("TextButton", Bar)
 CloseBtn.Size = UDim2.new(0, 45, 1, 0)
 CloseBtn.Position = UDim2.new(0.90,0,0,0)
@@ -166,9 +268,7 @@ CloseBtn.Text = "X"
 CloseBtn.TextScaled = true
 CloseBtn.TextColor3 = Color3.fromRGB(255,255,255)
 CloseBtn.BackgroundColor3 = Color3.fromRGB(70,0,0)
-
-local cc = Instance.new("UICorner", CloseBtn)
-cc.CornerRadius = UDim.new(0,12)
+Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0,12)
 
 --============================================================
 -- MENU
@@ -189,16 +289,7 @@ MenuStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 MenuStroke.Color = Color3.fromRGB(120,0,255)
 MenuStroke.Thickness = 3
 
--- sombra
-local mshadow = Instance.new("ImageLabel", Menu)
-mshadow.Size = UDim2.new(1,50,1,50)
-mshadow.Position = UDim2.new(0,-25,0,-25)
-mshadow.BackgroundTransparency = 1
-mshadow.Image = "rbxassetid://1316045217"
-mshadow.ImageColor3 = Color3.fromRGB(0,0,0)
-mshadow.ImageTransparency = 0.7
-
---========== MENU DRAG ==========
+-- MENU DRAG
 local menuDragging = false
 local menuStartPos, menuMouseStart
 
@@ -210,10 +301,8 @@ Menu.InputBegan:Connect(function(input)
 	end
 end)
 
-Menu.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		menuDragging = false
-	end
+Menu.InputEnded:Connect(function()
+	menuDragging = false
 end)
 
 UIS.InputChanged:Connect(function(input)
@@ -230,6 +319,7 @@ end)
 local Left = Instance.new("Frame", Menu)
 Left.Size = UDim2.new(0.30,0,1,0)
 Left.BackgroundColor3 = Color3.fromRGB(25,25,25)
+
 local LeftCorner = Instance.new("UICorner", Left)
 LeftCorner.CornerRadius = UDim.new(0,14)
 
@@ -241,11 +331,14 @@ local function CreateCategory(txt, y)
 	b.TextColor3 = Color3.fromRGB(255,255,255)
 	b.TextScaled = true
 	b.Font = Enum.Font.GothamBold
+
 	local bc = Instance.new("UICorner", b)
 	bc.CornerRadius = UDim.new(0,14)
+
 	local bs = Instance.new("UIStroke", b)
 	bs.Color = Color3.fromRGB(120,0,255)
 	bs.Thickness = 2
+
 	b.Text = txt
 	return b
 end
@@ -262,6 +355,7 @@ local Right = Instance.new("Frame", Menu)
 Right.Size = UDim2.new(0.70,0,1,0)
 Right.Position = UDim2.new(0.30,0,0,0)
 Right.BackgroundColor3 = Color3.fromRGB(22,22,22)
+
 local RightCorner = Instance.new("UICorner", Right)
 RightCorner.CornerRadius = UDim.new(0,14)
 
@@ -278,11 +372,14 @@ local function CreateOption(txt, y)
 	b.TextColor3 = Color3.fromRGB(255,255,255)
 	b.TextScaled = true
 	b.Font = Enum.Font.GothamBold
+
 	local bc = Instance.new("UICorner", b)
 	bc.CornerRadius = UDim.new(0,14)
+
 	local bs = Instance.new("UIStroke", b)
 	bs.Color = Color3.fromRGB(120,0,255)
 	bs.Thickness = 2
+
 	b.Text = txt
 	return b
 end
@@ -321,6 +418,7 @@ local RpPage = Instance.new("Frame", Right)
 RpPage.Size = UDim2.new(1,0,1,0)
 RpPage.BackgroundTransparency = 1
 RpPage.Visible = false
+
 local Soon = Instance.new("TextLabel", RpPage)
 Soon.Size = UDim2.new(1,0,1,0)
 Soon.BackgroundTransparency = 1
@@ -328,7 +426,7 @@ Soon.Text = "EM BREVE"
 Soon.TextColor3 = Color3.fromRGB(255,255,255)
 Soon.TextScaled = true
 
--- CRÉDITO PAGE
+-- CREDITO PAGE
 local CredPage = Instance.new("Frame", Right)
 CredPage.Size = UDim2.new(1,0,1,0)
 CredPage.BackgroundTransparency = 1
@@ -353,19 +451,30 @@ creditYT.TextScaled = true
 creditYT.Font = Enum.Font.GothamBold
 
 --============================================================
--- FUNÇÕES
+-- FUNÇÕES DO HUB
 --============================================================
 
+local toggleState = false
+
 OpenBtn.MouseButton1Click:Connect(function()
-	Bar.Visible = true
+	toggleState = not toggleState
+	if toggleState then
+		Bar.Visible = true
+	else
+		Bar.Visible = false
+		Menu.Visible = false
+		PlusBtn.Text = "+"
+		menuOpen = false
+	end
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
 	Bar.Visible = false
 	Menu.Visible = false
+	PlusBtn.Text = "+"
+	menuOpen = false
 end)
 
--- Toggle + / - e menu
 local menuOpen = false
 PlusBtn.MouseButton1Click:Connect(function()
 	menuOpen = not menuOpen
