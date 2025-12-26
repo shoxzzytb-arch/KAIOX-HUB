@@ -1,599 +1,878 @@
---============================================================
--- KAIOX HUB + TELA DE CARREGAMENTO (10s)
---============================================================
+-- KAIOX HUB 
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
-local Run = game:GetService("RunService")
 
-local LP = Players.LocalPlayer
-local Mouse = LP:GetMouse()
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
 
---============================================================
--- *** TELA DE CARREGAMENTO ***
---============================================================
+-- ================= GUI BASE =================
+local gui = Instance.new("ScreenGui")
+gui.IgnoreGuiInset = true
+gui.ResetOnSpawn = false
+gui.Parent = player.PlayerGui
 
-local LoadingGui = Instance.new("ScreenGui", LP:WaitForChild("PlayerGui"))
-LoadingGui.ResetOnSpawn = false
-LoadingGui.IgnoreGuiInset = true
-LoadingGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+local fundo = Instance.new("Frame")
+fundo.Size = UDim2.fromScale(1,1)
+fundo.BackgroundColor3 = Color3.new(0,0,0)
+fundo.Parent = gui
 
--- Fundo preto
-local Black = Instance.new("Frame", LoadingGui)
-Black.Size = UDim2.new(1,0,1,0)
-Black.BackgroundColor3 = Color3.fromRGB(0,0,0)
-Black.ZIndex = 10
+-- ================= MÚSICA =================
+local musica = Instance.new("Sound")
+musica.SoundId = "rbxassetid://79148752172118"
+musica.Volume = 1
+musica.Looped = true
+musica.Parent = gui
+musica:Play()
 
--- Foto
-local Photo = Instance.new("ImageLabel", Black)
-Photo.Size = UDim2.new(0,300,0,300)
-Photo.Position = UDim2.new(0.5,-150,0.28,-150)
-Photo.BackgroundTransparency = 1
-Photo.ZIndex = 11
-Photo.Image = "rbxassetid://77189072242089"
+-- ================= ESTRELAS =================
+local estrelas = {}
+local STAR_COUNT = 25
+local STAR_SPEED = 120
+local estrelasAtivas = true
 
--- Texto CARREGANDO:
-local LoadingTxt = Instance.new("TextLabel", Black)
-LoadingTxt.Size = UDim2.new(0,300,0,60)
-LoadingTxt.Position = UDim2.new(0.5,-150,0.57,0)
-LoadingTxt.BackgroundTransparency = 1
-LoadingTxt.TextColor3 = Color3.fromRGB(255,255,255)
-LoadingTxt.Font = Enum.Font.GothamBold
-LoadingTxt.TextScaled = true
-LoadingTxt.ZIndex = 11
-LoadingTxt.Text = "CARREGANDO:"
+for i = 1, STAR_COUNT do
+	local s = Instance.new("Frame")
+	s.Size = UDim2.fromOffset(2,2)
+	s.BackgroundColor3 = Color3.new(1,1,1)
+	s.BorderSizePixel = 0
+	s.Position = UDim2.fromOffset(
+		math.random(0, camera.ViewportSize.X),
+		math.random(0, camera.ViewportSize.Y)
+	)
+	s.Parent = fundo
+	table.insert(estrelas, s)
+end
 
--- Mensagens de 5 em 5s
-local msgs = {
-    "Iniciando scripts...",
-    "Carregando interface...",
-    "Otimizando performance...",
-    "Preparando ambiente...",
-    "Quase lá..."
+RunService.RenderStepped:Connect(function(dt)
+	if not estrelasAtivas then return end
+	for _, s in ipairs(estrelas) do
+		s.Position += UDim2.fromOffset(STAR_SPEED * dt, 0)
+		if s.Position.X.Offset > camera.ViewportSize.X then
+			s.Position = UDim2.fromOffset(-5, math.random(0, camera.ViewportSize.Y))
+		end
+	end
+end)
+
+-- ================= BLOCO CENTRAL =================
+local bloco = Instance.new("Frame")
+bloco.Size = UDim2.fromOffset(400,200)
+bloco.Position = UDim2.fromScale(0.5,0.5)
+bloco.AnchorPoint = Vector2.new(0.5,0.5)
+bloco.BackgroundColor3 = Color3.fromRGB(106,43,217)
+bloco.BorderColor3 = Color3.new(1,1,1)
+bloco.BorderSizePixel = 2
+bloco.Parent = fundo
+
+local corner = Instance.new("UICorner", bloco)
+corner.CornerRadius = UDim.new(0,50)
+
+-- ================= TÍTULO =================
+local titulo = Instance.new("TextLabel")
+titulo.BackgroundTransparency = 1
+titulo.Size = UDim2.new(1,0,0,50)
+titulo.Position = UDim2.fromOffset(0,5)
+titulo.Text = "KAIOX HUB"
+titulo.Font = Enum.Font.FredokaOne
+titulo.TextSize = 42
+titulo.Parent = bloco
+
+task.spawn(function()
+	local h = 0
+	while titulo.Parent do
+		h = (h + 0.004) % 1
+		titulo.TextColor3 = Color3.fromHSV(h,1,1)
+		task.wait(0.03)
+	end
+end)
+
+-- Linha branca
+local linha = Instance.new("Frame")
+linha.Size = UDim2.fromOffset(200,2)
+linha.Position = UDim2.fromOffset(100,55)
+linha.BackgroundColor3 = Color3.new(1,1,1)
+linha.BorderSizePixel = 0
+linha.Parent = bloco
+
+-- ================= TEXTOS =================
+local function criarTexto(txt, y)
+	local t = Instance.new("TextLabel")
+	t.BackgroundTransparency = 1
+	t.Size = UDim2.new(1,0,0,20)
+	t.Position = UDim2.fromOffset(0,y)
+	t.Text = txt
+	t.Font = Enum.Font.FredokaOne
+	t.TextSize = 14
+	t.TextColor3 = Color3.new(1,1,1)
+	t.Parent = bloco
+	return t
+end
+
+local carregando = criarTexto("CARREGANDO:", 65)
+local status = criarTexto("CARREGANDO SCRIPTS", 85)
+
+local mensagens = {
+	"CARREGANDO SCRIPTS",
+	"CARREGANDO MÓDULOS",
+	"ESPERE SÓ MAIS UM POUCO!",
+	"OTIMIZANDO SCRIPTS",
+	"CARREGANDO INTERFACE"
 }
 
 task.spawn(function()
-    while Black.Parent do
-        for _,m in ipairs(msgs) do
-            LoadingTxt.Text = "CARREGANDO: " .. m
-            task.wait(5)
-        end
-    end
+	while status.Parent do
+		status.Text = mensagens[math.random(#mensagens)]
+		task.wait(5)
+	end
 end)
 
--- Estrelas infinitas
+-- ================= BARRA =================
+local barraFundo = Instance.new("Frame")
+barraFundo.Size = UDim2.fromOffset(300,12)
+barraFundo.Position = UDim2.fromOffset(50,130)
+barraFundo.BackgroundColor3 = Color3.new(0,0,0)
+barraFundo.Parent = bloco
+
+local barra = Instance.new("Frame")
+barra.Size = UDim2.fromScale(0,1)
+barra.Parent = barraFundo
+
 task.spawn(function()
-    while Black.Parent do
-        local star = Instance.new("Frame", Black)
-        star.Size = UDim2.new(0,5,0,5)
-        star.BackgroundColor3 = Color3.fromRGB(255,255,255)
-        star.Position = UDim2.new(0,-10,math.random(),0)
-        star.ZIndex = 11
-        Instance.new("UICorner", star).CornerRadius = UDim.new(1,0)
-
-        task.spawn(function()
-            for i = 0,1,0.01 do
-                star.Position = UDim2.new(i, -10, star.Position.Y.Scale, 0)
-                task.wait(0.02)
-            end
-            star:Destroy()
-        end)
-
-        task.wait(0.3)
-    end
+	local h = 0
+	while barra.Parent do
+		h = (h + 0.01) % 1
+		barra.BackgroundColor3 = Color3.fromHSV(h,1,1)
+		task.wait()
+	end
 end)
 
--- Barra base
-local BarBack = Instance.new("Frame", Black)
-BarBack.Size = UDim2.new(0,500,0,40)
-BarBack.Position = UDim2.new(0.5,-250,0.70,0)
-BarBack.BackgroundColor3 = Color3.fromRGB(40,40,40)
-BarBack.ZIndex = 10
-Instance.new("UICorner", BarBack).CornerRadius = UDim.new(0,10)
+local porcento = Instance.new("TextLabel")
+porcento.BackgroundTransparency = 1
+porcento.Size = UDim2.fromScale(1,1)
+porcento.Text = "0%"
+porcento.Font = Enum.Font.FredokaOne
+porcento.TextSize = 14
+porcento.TextColor3 = Color3.new(1,1,1)
+porcento.Parent = barraFundo
 
--- Barra de progresso
-local BarFill = Instance.new("Frame", BarBack)
-BarFill.Size = UDim2.new(0,0,1,0)
-BarFill.BackgroundColor3 = Color3.fromRGB(120,0,255)
-BarFill.ZIndex = 11
-Instance.new("UICorner", BarFill).CornerRadius = UDim.new(0,10)
+-- ================= PROGRESSO =================
+for i = 1,100 do
+	barra.Size = UDim2.fromScale(i/100,1)
+	porcento.Text = i.."%"
+	task.wait(0.045)
+end
 
--- Texto %
-local Percent = Instance.new("TextLabel", Black)
-Percent.Size = UDim2.new(0,200,0,50)
-Percent.Position = UDim2.new(0.5,-100,0.63,0)
-Percent.BackgroundTransparency = 1
-Percent.TextColor3 = Color3.fromRGB(255,255,255)
-Percent.TextScaled = true
-Percent.Font = Enum.Font.GothamBold
-Percent.ZIndex = 11
-Percent.Text = "0%"
+barraFundo.Visible = false
+local exec = criarTexto("EXECUTANDO",130)
+exec.TextColor3 = Color3.fromRGB(0,255,0)
 
--- Animação do loading (10s)
-task.spawn(function()
-    for i = 1, 100 do
-        BarFill.Size = UDim2.new(i/100,0,1,0)
-        Percent.Text = i.."%"
-        task.wait(0.10)
-    end
-    LoadingGui:Destroy()
+task.wait(2)
+
+-- ================= FADE SINCRONIZADO =================
+estrelasAtivas = false
+local tweenInfo = TweenInfo.new(2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+TweenService:Create(fundo, tweenInfo, {BackgroundTransparency = 1}):Play()
+TweenService:Create(bloco, tweenInfo, {BackgroundTransparency = 1}):Play()
+TweenService:Create(musica, tweenInfo, {Volume = 0}):Play()
+
+for _, obj in ipairs(bloco:GetDescendants()) do
+	if obj:IsA("TextLabel") then
+		TweenService:Create(obj, tweenInfo, {TextTransparency = 1}):Play()
+	elseif obj:IsA("Frame") then
+		TweenService:Create(obj, tweenInfo, {BackgroundTransparency = 1}):Play()
+	end
+end
+
+for _, s in ipairs(estrelas) do
+	TweenService:Create(s, tweenInfo, {BackgroundTransparency = 1}):Play()
+end
+
+task.wait(2)
+
+musica:Stop()
+gui:Destroy()
+
+-- ================= MENSAGEM FINAL =================
+local finalGui = Instance.new("ScreenGui", player.PlayerGui)
+
+local txt = Instance.new("TextLabel", finalGui)
+txt.Size = UDim2.fromScale(1,1)
+txt.BackgroundTransparency = 1
+txt.TextWrapped = true
+txt.Font = Enum.Font.FredokaOne
+txt.TextSize = 24
+txt.TextColor3 = Color3.new(1,1,1)
+txt.TextTransparency = 1
+txt.Text =
+	"BEM VINDO "..player.Name..
+	"\n\nESPERO QUE VOCÊ GOSTE DO KAIOX HUB!\n\nOBRIGADO POR EXECUTAR :)"
+
+TweenService:Create(txt, TweenInfo.new(1), {TextTransparency = 0}):Play()
+task.wait(5)
+TweenService:Create(txt, TweenInfo.new(2), {TextTransparency = 1}):Play()
+task.wait(2)
+
+finalGui:Destroy()
+
+-- ================= BOTÃO FLUTUANTE =================
+local btnGui = Instance.new("ScreenGui", player.PlayerGui)
+btnGui.ResetOnSpawn = false
+
+local btn = Instance.new("ImageButton", btnGui)
+btn.Size = UDim2.fromOffset(55,55)
+btn.Position = UDim2.fromOffset(200,200)
+btn.Image = "rbxassetid://128674111436582"
+btn.BackgroundTransparency = 1
+
+local c = Instance.new("UICorner", btn)
+c.CornerRadius = UDim.new(1,0)
+
+local dragging = false
+local dragStart
+local startPos
+
+btn.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+	or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = btn.Position
+	end
 end)
 
---============================================================
--- KAIOX HUB (MESMO DE ANTES)
---============================================================
-
-local gui = Instance.new("ScreenGui", LP:WaitForChild("PlayerGui"))
-gui.ResetOnSpawn = false
-
---============================================================
--- BOTÃO REDONDO (AGORA 12s)
---============================================================
-
-local OpenBtn = Instance.new("ImageButton")
-OpenBtn.Size = UDim2.new(0, 70, 0, 70)
-OpenBtn.Position = UDim2.new(0.05, 0, 0.5, 0)
-OpenBtn.BackgroundColor3 = Color3.fromRGB(20,20,20)
-OpenBtn.AutoButtonColor = true
-OpenBtn.Image = ""
-OpenBtn.Visible = false -- começa invisível
-OpenBtn.Parent = gui
-
--- aparece depois de 12s
-task.delay(12, function()
-    OpenBtn.Visible = true
+btn.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+	or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
 end)
 
-local circle = Instance.new("UICorner", OpenBtn)
-circle.CornerRadius = UDim.new(1,0)
+UIS.InputChanged:Connect(function(input)
+	if dragging and (
+		input.UserInputType == Enum.UserInputType.MouseMovement
+		or input.UserInputType == Enum.UserInputType.Touch
+	) then
+		local delta = input.Position - dragStart
+		btn.Position = UDim2.fromOffset(
+			startPos.X.Offset + delta.X,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+end)
+-- ================= SERVIÇOS =================
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
 
-local Icon = Instance.new("ImageLabel", OpenBtn)
-Icon.Size = UDim2.new(0.6,0,0.6,0)
-Icon.Position = UDim2.new(0.2,0,0.2,0)
-Icon.BackgroundTransparency = 1
-Icon.Image = "rbxassetid://3926305904"
-Icon.ImageRectOffset = Vector2.new(884,204)
-Icon.ImageRectSize = Vector2.new(36,36)
+-- ================= GUI PRINCIPAL =================
+local menuGui = Instance.new("ScreenGui", player.PlayerGui)
+menuGui.Enabled = false
+menuGui.ResetOnSpawn = false
+menuGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
---========== DRAG DO BOTÃO ==========
+-- ================= BARRA =================
+local menu = Instance.new("ImageLabel", menuGui)
+menu.Size = UDim2.fromOffset(700,180)
+menu.Position = UDim2.fromScale(0.5,0.5)
+menu.AnchorPoint = Vector2.new(0.5,0.5)
+menu.Image = "rbxassetid://121463511643141"
+menu.ImageTransparency = 0.2
+menu.BackgroundTransparency = 1
+menu.Visible = false
+menu.ZIndex = 50
+menu.Active = true
+
+-- ================= DRAG =================
 local dragging = false
 local dragStart, startPos
 
-OpenBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 
-    or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = OpenBtn.Position
-    end
+menu.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+	or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = menu.Position
+	end
 end)
 
-OpenBtn.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 
-    or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if dragging then
-        local delta = input.Position - dragStart
-        OpenBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
---============================================================
--- BARRA SUPERIOR
---============================================================
-
-local Bar = Instance.new("Frame", gui)
-Bar.Size = UDim2.new(0, 450, 0, 55)
-Bar.Position = UDim2.new(0.3, 0, 0.15, 0)
-Bar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-Bar.BackgroundTransparency = 0.15
-Bar.Visible = false
-
-Instance.new("UICorner", Bar).CornerRadius = UDim.new(0, 12)
-
-local B1 = Instance.new("UIStroke", Bar)
-B1.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-B1.Color = Color3.fromRGB(120,0,255)
-B1.Thickness = 3
-
---========== BOTÃO MOVER ==========
-local MoveBar = Instance.new("TextButton", Bar)
-MoveBar.Size = UDim2.new(0, 45, 1, 0)
-MoveBar.Text = "+"
-MoveBar.TextColor3 = Color3.fromRGB(255,255,255)
-MoveBar.TextScaled = true
-MoveBar.BackgroundColor3 = Color3.fromRGB(40,40,40)
-Instance.new("UICorner", MoveBar).CornerRadius = UDim.new(0,12)
-
-local draggingBar = false
-local dragBarStart, barStartPos
-
-MoveBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 
-    or input.UserInputType == Enum.UserInputType.Touch then
-        draggingBar = true
-        dragBarStart = input.Position
-        barStartPos = Bar.Position
-    end
-end)
-
-MoveBar.InputEnded:Connect(function()
-    draggingBar = false
+menu.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1
+	or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
 end)
 
 UIS.InputChanged:Connect(function(input)
-    if draggingBar then
-        local delta = input.Position - dragBarStart
-        Bar.Position = UDim2.new(barStartPos.X.Scale, barStartPos.X.Offset + delta.X, barStartPos.Y.Scale, barStartPos.Y.Offset + delta.Y)
-    end
+	if dragging and (
+		input.UserInputType == Enum.UserInputType.MouseMovement
+		or input.UserInputType == Enum.UserInputType.Touch
+	) then
+		local delta = input.Position - dragStart
+		menu.Position = UDim2.new(
+			startPos.X.Scale, startPos.X.Offset + delta.X,
+			startPos.Y.Scale, startPos.Y.Offset + delta.Y
+		)
+	end
 end)
 
---========== TÍTULO KAIOX ==========
-local Title = Instance.new("TextLabel", Bar)
-Title.Size = UDim2.new(0.65, 0, 1, 0)
-Title.Position = UDim2.new(0.15, 0, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "KAIOX HUB"
-Title.TextScaled = true
-Title.Font = Enum.Font.GothamBold
+-- ================= TÍTULO =================
+local menuTitle = Instance.new("TextLabel", menu)
+menuTitle.Size = UDim2.fromScale(1,1)
+menuTitle.BackgroundTransparency = 1
+menuTitle.Position = UDim2.fromOffset(0,13)
+menuTitle.Text = "KAIOX HUB"
+menuTitle.Font = Enum.Font.FredokaOne
+menuTitle.TextSize = 48
+menuTitle.ZIndex = 51
 
 task.spawn(function()
-    while true do
-        for h=0,1,0.01 do
-            Title.TextColor3 = Color3.fromHSV(h,1,1)
-            task.wait(0.03)
-        end
-    end
+	local h = 0
+	while menuTitle.Parent do
+		h = (h + 0.005) % 1
+		menuTitle.TextColor3 = Color3.fromHSV(h,1,1)
+		task.wait(0.03)
+	end
 end)
 
---========== + / - ==========
-local PlusBtn = Instance.new("TextButton", Bar)
-PlusBtn.Size = UDim2.new(0, 45, 1, 0)
-PlusBtn.Position = UDim2.new(0.80, 0, 0, 0)
-PlusBtn.Text = "+"
-PlusBtn.TextScaled = true
-PlusBtn.TextColor3 = Color3.fromRGB(255,255,255)
-PlusBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-Instance.new("UICorner", PlusBtn).CornerRadius = UDim.new(0,12)
+-- ================= BOTÃO X =================
+local closeBtn = Instance.new("TextButton", menu)
+closeBtn.Size = UDim2.fromOffset(40,40)
+closeBtn.Position = UDim2.new(1,-60,0,87) -- 10px pra trás
+closeBtn.Text = "X"
+closeBtn.Font = Enum.Font.FredokaOne
+closeBtn.TextSize = 32
+closeBtn.TextColor3 = Color3.new(1,1,1)
+closeBtn.BackgroundTransparency = 1
+closeBtn.ZIndex = 51
 
---========== X ==========
-local CloseBtn = Instance.new("TextButton", Bar)
-CloseBtn.Size = UDim2.new(0, 45, 1, 0)
-CloseBtn.Position = UDim2.new(0.90,0,0,0)
-CloseBtn.Text = "X"
-CloseBtn.TextScaled = true
-CloseBtn.TextColor3 = Color3.fromRGB(255,255,255)
-CloseBtn.BackgroundColor3 = Color3.fromRGB(70,0,0)
-Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0,12)
+-- ================= BOTÃO + =================
+local toggleBtn = Instance.new("TextButton", menu)
+toggleBtn.Size = UDim2.fromOffset(40,40)
+toggleBtn.Position = UDim2.fromOffset(20,87) -- 10px pra frente
+toggleBtn.Text = "+"
+toggleBtn.Font = Enum.Font.FredokaOne
+toggleBtn.TextSize = 32
+toggleBtn.TextColor3 = Color3.new(1,1,1)
+toggleBtn.BackgroundTransparency = 1
+toggleBtn.ZIndex = 51
 
---============================================================
--- MENU
---============================================================
+-- ================= MENU EXTRA =================
+local extraMenu = Instance.new("ImageLabel", menuGui)
+extraMenu.Size = UDim2.fromOffset(1000,400)
+extraMenu.Position = UDim2.fromScale(0.5,0.65)
+extraMenu.AnchorPoint = Vector2.new(0.5,0.5)
+extraMenu.Image = "rbxassetid://104698208097279"
+extraMenu.BackgroundTransparency = 1
+extraMenu.Visible = false
+extraMenu.ZIndex = 10
 
-local Menu = Instance.new("Frame", gui)
-Menu.Size = UDim2.new(0, 540, 0, 420)
-Menu.Position = UDim2.new(0.3,0,0.25,0)
-Menu.BackgroundColor3 = Color3.fromRGB(20,20,20)
-Menu.BackgroundTransparency = 0.15
-Menu.Visible = false
-
-local MenuCorner = Instance.new("UICorner", Menu)
-MenuCorner.CornerRadius = UDim.new(0,14)
-
-local MenuStroke = Instance.new("UIStroke", Menu)
-MenuStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-MenuStroke.Color = Color3.fromRGB(120,0,255)
-MenuStroke.Thickness = 3
-
--- MENU DRAG
-local menuDragging = false
-local menuStartPos, menuMouseStart
-
-Menu.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        menuDragging = true
-        menuStartPos = Menu.Position
-        menuMouseStart = input.Position
-    end
+local aberto = false
+toggleBtn.MouseButton1Click:Connect(function()
+	aberto = not aberto
+	toggleBtn.Text = aberto and "-" or "+"
+	extraMenu.Visible = aberto
 end)
 
-Menu.InputEnded:Connect(function()
-    menuDragging = false
+-- ================= CONFIRMAÇÃO =================
+local confirmGui = Instance.new("ScreenGui", player.PlayerGui)
+confirmGui.Enabled = false
+
+local confirm = Instance.new("ImageLabel", confirmGui)
+confirm.Size = UDim2.fromOffset(500,500)
+confirm.Position = UDim2.fromScale(0.5,0.5)
+confirm.AnchorPoint = Vector2.new(0.5,0.5)
+confirm.Image = "rbxassetid://104698208097279"
+confirm.BackgroundTransparency = 1
+
+local txt1 = Instance.new("TextLabel", confirm)
+txt1.BackgroundTransparency = 1
+txt1.Size = UDim2.fromOffset(400,60)
+txt1.Position = UDim2.fromOffset(50,40)
+txt1.Text = "DESEJA SAIR DO"
+txt1.Font = Enum.Font.FredokaOne
+txt1.TextSize = 48
+txt1.TextColor3 = Color3.new(1,1,1)
+
+local txt2 = Instance.new("TextLabel", confirm)
+txt2.BackgroundTransparency = 1
+txt2.Size = UDim2.fromOffset(400,80)
+txt2.Position = UDim2.fromOffset(50,110)
+txt2.Text = "KAIOX HUB?"
+txt2.Font = Enum.Font.FredokaOne
+txt2.TextSize = 60
+
+task.spawn(function()
+	local h = 0
+	while txt2.Parent do
+		h = (h + 0.005) % 1
+		txt2.TextColor3 = Color3.fromHSV(h,1,1)
+		task.wait(0.03)
+	end
 end)
 
-UIS.InputChanged:Connect(function(input)
-    if menuDragging then
-        local delta = input.Position - menuMouseStart
-        Menu.Position = UDim2.new(menuStartPos.X.Scale, menuStartPos.X.Offset + delta.X, menuStartPos.Y.Scale, menuStartPos.Y.Offset + delta.Y)
-    end
+local sim = Instance.new("TextButton", confirm)
+sim.Size = UDim2.fromOffset(150,60)
+sim.Position = UDim2.fromOffset(60,220)
+sim.Text = "SIM"
+sim.Font = Enum.Font.FredokaOne
+sim.TextSize = 32
+sim.TextColor3 = Color3.new(1,1,1)
+sim.BackgroundTransparency = 1
+
+local nao = Instance.new("TextButton", confirm)
+nao.Size = UDim2.fromOffset(150,60)
+nao.Position = UDim2.fromOffset(290,220)
+nao.Text = "NÃO"
+nao.Font = Enum.Font.FredokaOne
+nao.TextSize = 32
+nao.TextColor3 = Color3.new(1,1,1)
+nao.BackgroundTransparency = 1
+
+-- ================= EVENTOS =================
+btn.MouseButton1Click:Connect(function()
+	menuGui.Enabled = true
+	menu.Visible = true
 end)
 
---============================================================
--- CATEGORIAS
---============================================================
+closeBtn.MouseButton1Click:Connect(function()
+	confirmGui.Enabled = true
+end)
 
-local Left = Instance.new("Frame", Menu)
-Left.Size = UDim2.new(0.30,0,1,0)
-Left.BackgroundColor3 = Color3.fromRGB(25,25,25)
+nao.MouseButton1Click:Connect(function()
+	confirmGui.Enabled = false
+end)
 
-local LeftCorner = Instance.new("UICorner", Left)
-LeftCorner.CornerRadius = UDim.new(0,14)
+sim.MouseButton1Click:Connect(function()
+	menuGui:Destroy()
+	btn:Destroy()
+	confirmGui:Destroy()
 
-local function CreateCategory(txt, y)
-    local b = Instance.new("TextButton", Left)
-    b.Size = UDim2.new(1,0,0,55)
-    b.Position = UDim2.new(0,0,0,y)
-    b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    b.TextColor3 = Color3.fromRGB(255,255,255)
-    b.TextScaled = true
-    b.Font = Enum.Font.GothamBold
+	task.wait(1)
 
-    local bc = Instance.new("UICorner", b)
-    bc.CornerRadius = UDim.new(0,14)
+	local dcGui = Instance.new("ScreenGui", player.PlayerGui)
+	local dc = Instance.new("TextLabel", dcGui)
+	dc.Size = UDim2.fromScale(1,1)
+	dc.BackgroundTransparency = 1
+	dc.Font = Enum.Font.FredokaOne
+	dc.TextSize = 28
+	dc.TextColor3 = Color3.new(1,1,1)
+	dc.TextTransparency = 1
 
-    local bs = Instance.new("UIStroke", b)
-    bs.Color = Color3.fromRGB(120,0,255)
-    bs.Thickness = 2
+	local created = os.date("%d/%m/%Y", player.AccountAge * -86400 + os.time())
 
-    b.Text = txt
-    return b
+	TweenService:Create(dc, TweenInfo.new(1), {TextTransparency = 0}):Play()
+
+	-- ANIMAÇÃO DOS PONTOS
+	task.spawn(function()
+		local base = "DESCONECTANDO"
+		local dots = { "", ".", "..", "...", "..", "." }
+		while dc.Parent do
+			for _,d in ipairs(dots) do
+				dc.Text =
+					base..d.."\n\n"..
+					"Nome: "..player.Name.."\n"..
+					"Data de entrada no Roblox: "..created.."\n"..
+					"Situação: on"
+				task.wait(0.4)
+			end
+		end
+	end)
+
+	task.wait(5)
+	TweenService:Create(dc, TweenInfo.new(2), {TextTransparency = 1}):Play()
+end)
+-- ================= SISTEMA DE PÁGINAS (AJUSTE FINAL DEFINITIVO) =================
+-- Usa o extraMenu (menu do +)
+
+-- Título KAIOX HUB
+local pagesTitle = Instance.new("TextLabel", extraMenu)
+pagesTitle.Size = UDim2.fromOffset(400,70)
+pagesTitle.Position = UDim2.new(0.5, -200, 0, 19)
+pagesTitle.BackgroundTransparency = 1
+pagesTitle.Text = "KAIOX HUB"
+pagesTitle.Font = Enum.Font.FredokaOne
+pagesTitle.TextSize = 60
+pagesTitle.ZIndex = 20
+
+task.spawn(function()
+	local h = 0
+	while pagesTitle.Parent do
+		h = (h + 0.004) % 1
+		pagesTitle.TextColor3 = Color3.fromHSV(h,1,1)
+		task.wait(0.03)
+	end
+end)
+
+-- Linha abaixo do título (SUBIU e ficou logo embaixo)
+local titleLine = Instance.new("Frame", extraMenu)
+titleLine.Size = UDim2.fromOffset(350,3)
+titleLine.Position = UDim2.fromOffset(325,82) -- antes 95, agora mais pra cima
+titleLine.BackgroundColor3 = Color3.fromRGB(106,43,217)
+titleLine.BorderSizePixel = 0
+titleLine.ZIndex = 20
+
+-- Container das páginas
+local pagesHolder = Instance.new("Frame", extraMenu)
+pagesHolder.Size = UDim2.fromOffset(260,250)
+pagesHolder.Position = UDim2.fromOffset(105,120)
+pagesHolder.BackgroundTransparency = 1
+pagesHolder.ZIndex = 20
+
+-- Linha vertical separando páginas das opções
+local sideLine = Instance.new("Frame", extraMenu)
+sideLine.Size = UDim2.fromOffset(3,225)
+sideLine.Position = UDim2.fromOffset(375,95)
+sideLine.BackgroundColor3 = Color3.fromRGB(106,43,217)
+sideLine.BorderSizePixel = 0
+sideLine.ZIndex = 20
+
+-- Função pra criar botões de página
+local function createPageButton(text, yPos)
+	local btn = Instance.new("TextButton", pagesHolder)
+	btn.Size = UDim2.fromOffset(260,60)
+	btn.Position = UDim2.fromOffset(0, yPos)
+	btn.BackgroundColor3 = Color3.fromRGB(106,43,217)
+	btn.BackgroundTransparency = 0.2
+	btn.BorderSizePixel = 0
+	btn.Text = text
+	btn.Font = Enum.Font.FredokaOne
+	btn.TextSize = 28
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.ZIndex = 21
+
+	local corner = Instance.new("UICorner", btn)
+	corner.CornerRadius = UDim.new(0,12)
+
+	return btn
 end
 
-local UniversalBtn = CreateCategory("UNIVERSAL",0)
-local RpBtn = CreateCategory("RP",55)
-local CredBtn = CreateCategory("CREDITO",110)
+-- Páginas
+local pageUniversal = createPageButton("UNIVERSAL", 0)
+local pageNexus = createPageButton("NEXUS", 70)
+local pageCredits = createPageButton("CRÉDITOS", 140)
 
---============================================================
--- DIREITA / CONTEÚDO
---============================================================
+-- Página inicial
+local currentPage = "UNIVERSAL"
 
-local Right = Instance.new("Frame", Menu)
-Right.Size = UDim2.new(0.70,0,1,0)
-Right.Position = UDim2.new(0.30,0,0,0)
-Right.BackgroundColor3 = Color3.fromRGB(22,22,22)
-
-local RightCorner = Instance.new("UICorner", Right)
-RightCorner.CornerRadius = UDim.new(0,14)
-
--- UNIVERSAL PAGE
-local UniversalPage = Instance.new("Frame", Right)
-UniversalPage.Size = UDim2.new(1,0,1,0)
-UniversalPage.BackgroundTransparency = 1
-
-local function CreateOption(txt, y)
-    local b = Instance.new("TextButton", UniversalPage)
-    b.Size = UDim2.new(1,-20,0,55)
-    b.Position = UDim2.new(0,10,0,y)
-    b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    b.TextColor3 = Color3.fromRGB(255,255,255)
-    b.TextScaled = true
-    b.Font = Enum.Font.GothamBold
-
-    local bc = Instance.new("UICorner", b)
-    bc.CornerRadius = UDim.new(0,14)
-
-    local bs = Instance.new("UIStroke", b)
-    bs.Color = Color3.fromRGB(120,0,255)
-    bs.Thickness = 2
-
-    b.Text = txt
-    return b
+local function selectPage(name)
+	currentPage = name
 end
 
-local InfiniteBtn = CreateOption("InfiniteJump", 10)
-local NoclipBtn = CreateOption("Noclip", 70)
-
-local SpeedBox = Instance.new("TextBox", UniversalPage)
-SpeedBox.Size = UDim2.new(1,-20,0,50)
-SpeedBox.Position = UDim2.new(0,10,0,130)
-SpeedBox.Text = "WalkSpeed"
-SpeedBox.TextScaled = true
-SpeedBox.TextColor3 = Color3.fromRGB(255,255,255)
-SpeedBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
-local s1 = Instance.new("UICorner", SpeedBox)
-s1.CornerRadius = UDim.new(0,14)
-local s2 = Instance.new("UIStroke", SpeedBox)
-s2.Color = Color3.fromRGB(120,0,255)
-s2.Thickness = 2
-
-local JumpBox = Instance.new("TextBox", UniversalPage)
-JumpBox.Size = UDim2.new(1,-20,0,50)
-JumpBox.Position = UDim2.new(0,10,0,190)
-JumpBox.Text = "JumpPower"
-JumpBox.TextScaled = true
-JumpBox.TextColor3 = Color3.fromRGB(255,255,255)
-JumpBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
-local jp1 = Instance.new("UICorner", JumpBox)
-jp1.CornerRadius = UDim.new(0,14)
-local jp2 = Instance.new("UIStroke", JumpBox)
-jp2.Color = Color3.fromRGB(120,0,255)
-jp2.Thickness = 2
-
--- Novo botão ESP
-local EspBtn = CreateOption("ESP", 250) -- Adicionando o botão ESP
-
--- RP PAGE
-local RpPage = Instance.new("Frame", Right)
-RpPage.Size = UDim2.new(1,0,1,0)
-RpPage.BackgroundTransparency = 1
-RpPage.Visible = false
-
-local Soon = Instance.new("TextLabel", RpPage)
-Soon.Size = UDim2.new(1,0,1,0)
-Soon.BackgroundTransparency = 1
-Soon.Text = "EM BREVE"
-Soon.TextColor3 = Color3.fromRGB(255,255,255)
-Soon.TextScaled = true
-
--- CREDITO PAGE
-local CredPage = Instance.new("Frame", Right)
-CredPage.Size = UDim2.new(1,0,1,0)
-CredPage.BackgroundTransparency = 1
-CredPage.Visible = false
-
-local creditTitle = Instance.new("TextLabel", CredPage)
-creditTitle.Size = UDim2.new(1,0,0,50)
-creditTitle.Position = UDim2.new(0,0,0,20)
-creditTitle.BackgroundTransparency = 1
-creditTitle.Text = "Feito por: KAIOX"
-creditTitle.TextColor3 = Color3.fromRGB(255,255,255)
-creditTitle.TextScaled = true
-creditTitle.Font = Enum.Font.GothamBold
-
-local creditYT = Instance.new("TextLabel", CredPage)
-creditYT.Size = UDim2.new(1,0,0,50)
-creditYT.Position = UDim2.new(0,0,0,90)
-creditYT.BackgroundTransparency = 1
-creditYT.Text = "YOUTUBE: KAIOXKX"
-creditYT.TextColor3 = Color3.fromRGB(255,255,255)
-creditYT.TextScaled = true
-creditYT.Font = Enum.Font.GothamBold
-
---============================================================
--- FUNÇÕES DO HUB
---============================================================
-
-local toggleState = false
-
-OpenBtn.MouseButton1Click:Connect(function()
-    toggleState = not toggleState
-    if toggleState then
-        Bar.Visible = true
-    else
-        Bar.Visible = false
-        Menu.Visible = false
-        PlusBtn.Text = "+"
-        menuOpen = false
-    end
+pageUniversal.MouseButton1Click:Connect(function()
+	selectPage("UNIVERSAL")
 end)
 
-CloseBtn.MouseButton1Click:Connect(function()
-    Bar.Visible = false
-    Menu.Visible = false
-    PlusBtn.Text = "+"
-    menuOpen = false
+pageNexus.MouseButton1Click:Connect(function()
+	selectPage("NEXUS")
 end)
 
-local menuOpen = false
-PlusBtn.MouseButton1Click:Connect(function()
-    menuOpen = not menuOpen
-    if menuOpen then
-        PlusBtn.Text = "-"
-        Menu.Visible = true
-    else
-        PlusBtn.Text = "+"
-        Menu.Visible = false
-    end
+pageCredits.MouseButton1Click:Connect(function()
+	selectPage("CRÉDITOS")
 end)
 
-UniversalBtn.MouseButton1Click:Connect(function()
-    UniversalPage.Visible = true
-    RpPage.Visible = false
-    CredPage.Visible = false
+selectPage("UNIVERSAL")
+-- ================= TOGGLE FINAL COM ESTADO LIMPO =================
+
+local clickCount = 0
+local hubVisivel = true
+local animando = false
+
+-- estado do menu extra
+local extraWasOpen = false
+
+-- pega todos os GuiObjects do HUB (menuGui + confirmGui)
+local function getHubObjects()
+	local list = {}
+
+	local function scan(gui)
+		for _,obj in ipairs(gui:GetDescendants()) do
+			if obj:IsA("GuiObject") then
+				table.insert(list, obj)
+			end
+		end
+	end
+
+	if menuGui then scan(menuGui) end
+	if confirmGui then scan(confirmGui) end
+
+	return list
+end
+
+local hubObjects = getHubObjects()
+
+-- mostra / esconde tudo no mesmo frame
+local function setHubVisible(show)
+	if animando then return end
+	animando = true
+
+	-- se for esconder, guarda estado e fecha menu extra
+	if not show and extraMenu then
+		extraWasOpen = extraMenu.Visible
+		extraMenu.Visible = false
+		if toggleBtn then toggleBtn.Text = "+" end
+	end
+
+	for _,obj in ipairs(hubObjects) do
+		if obj:IsA("TextLabel") or obj:IsA("TextButton") then
+			obj.TextTransparency = show and 0 or 1
+		end
+
+		if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+			obj.ImageTransparency = show and 0 or 1
+		end
+
+		if obj:IsA("Frame") then
+			obj.BackgroundTransparency = show and obj.BackgroundTransparency or 1
+		end
+
+		obj.Visible = show
+	end
+
+	-- quando voltar, NÃO reabre menu extra
+	if show and extraMenu then
+		extraMenu.Visible = false
+		if toggleBtn then toggleBtn.Text = "+" end
+	end
+
+	hubVisivel = show
+	animando = false
+end
+
+-- clique no botão flutuante
+btn.MouseButton1Click:Connect(function()
+	clickCount += 1
+
+	-- 1º clique: só abre o menu principal (script antigo cuida)
+	if clickCount == 1 then
+		return
+	end
+
+	-- 2º clique em diante: toggle total
+	setHubVisible(not hubVisivel)
+end)
+-- ================= CONTEÚDO DA PÁGINA UNIVERSAL =================
+
+-- Holder do conteúdo da UNIVERSAL
+local universalHolder = Instance.new("Frame", extraMenu)
+universalHolder.Size = UDim2.fromOffset(380,260)
+universalHolder.Position = UDim2.fromOffset(395,120)
+universalHolder.BackgroundTransparency = 1
+universalHolder.Visible = true
+universalHolder.ZIndex = 20
+
+-- Scroll
+local scroll = Instance.new("ScrollingFrame", universalHolder)
+scroll.Size = UDim2.fromScale(1,1)
+scroll.CanvasSize = UDim2.fromOffset(0,520)
+scroll.ScrollBarImageTransparency = 1
+scroll.BackgroundTransparency = 1
+scroll.BorderSizePixel = 0
+
+local layout = Instance.new("UIListLayout", scroll)
+layout.Padding = UDim.new(0,12)
+
+-- Função base pra criar botões
+local function createOption(text, bg)
+	local btn = Instance.new("TextButton", scroll)
+	btn.Size = UDim2.fromOffset(360,50)
+	btn.BackgroundColor3 = bg or Color3.fromRGB(40,40,40)
+	btn.Text = text
+	btn.Font = Enum.Font.FredokaOne
+	btn.TextSize = 22
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.BorderSizePixel = 0
+	btn.ZIndex = 21
+
+	local c = Instance.new("UICorner", btn)
+	c.CornerRadius = UDim.new(0,10)
+
+	return btn
+end
+
+-- INPUT VELOCIDADE
+local speedBox = Instance.new("TextBox", scroll)
+speedBox.Size = UDim2.fromOffset(360,50)
+speedBox.BackgroundColor3 = Color3.fromRGB(0,0,0)
+speedBox.PlaceholderText = "Velocidade"
+speedBox.Text = ""
+speedBox.Font = Enum.Font.FredokaOne
+speedBox.TextSize = 22
+speedBox.TextColor3 = Color3.new(1,1,1)
+speedBox.BorderSizePixel = 0
+speedBox.ClearTextOnFocus = false
+
+Instance.new("UICorner", speedBox).CornerRadius = UDim.new(0,10)
+
+-- INPUT PULO
+local jumpBox = speedBox:Clone()
+jumpBox.PlaceholderText = "Pulo"
+jumpBox.Parent = scroll
+
+-- BOTÕES OFF / ON
+local function createToggle(text)
+	local btn = createOption(text .. " : OFF")
+	btn:SetAttribute("State", false)
+
+	btn.MouseButton1Click:Connect(function()
+		local state = not btn:GetAttribute("State")
+		btn:SetAttribute("State", state)
+		btn.Text = text .. (state and " : ON" or " : OFF")
+	end)
+
+	return btn
+end
+
+local espBtn = createToggle("ESP")
+local infJumpBtn = createToggle("INFINITE JUMP")
+local noclipBtn = createToggle("NOCLIP")
+
+-- AIMBOT
+local aimBtn = createToggle("AIMBOT")
+
+-- ===== SERVIÇOS =====
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+
+local player = Players.LocalPlayer
+
+-- ===== VARIÁVEIS BASE =====
+local wantedSpeed = 16
+local wantedJump = 50
+
+-- ================= VELOCIDADE & PULO =================
+
+local function getHumanoid()
+	if player.Character and player.Character:FindFirstChild("Humanoid") then
+		return player.Character:FindFirstChild("Humanoid")
+	end
+end
+
+speedBox.FocusLost:Connect(function()
+	local val = tonumber(speedBox.Text)
+	if val then
+		wantedSpeed = math.clamp(val, 1, 300)
+	end
+	speedBox.Text = ""
+	speedBox.PlaceholderText = "Velocidade (" .. wantedSpeed .. ")"
 end)
 
-RpBtn.MouseButton1Click:Connect(function()
-    UniversalPage.Visible = false
-    RpPage.Visible = true
-    CredPage.Visible = false
+jumpBox.FocusLost:Connect(function()
+	local val = tonumber(jumpBox.Text)
+	if val then
+		wantedJump = math.clamp(val, 1, 300)
+	end
+	jumpBox.Text = ""
+	jumpBox.PlaceholderText = "Pulo (" .. wantedJump .. ")"
 end)
 
-CredBtn.MouseButton1Click:Connect(function()
-    UniversalPage.Visible = false
-    RpPage.Visible = false
-    CredPage.Visible = true
+player.CharacterAdded:Connect(function()
+	task.wait(1)
+	local hum = getHumanoid()
+	if hum then
+		hum.WalkSpeed = wantedSpeed
+		hum.JumpPower = wantedJump
+	end
 end)
 
---============================================================
--- UNIVERSAL FUNÇÕES
---============================================================
-
-local infinite = false
-InfiniteBtn.MouseButton1Click:Connect(function()
-    infinite = not infinite
-    InfiniteBtn.Text = infinite and "InfiniteJump: ON" or "InfiniteJump"
+RunService.Heartbeat:Connect(function()
+	local hum = getHumanoid()
+	if hum then
+		if hum.WalkSpeed ~= wantedSpeed then
+			hum.WalkSpeed = wantedSpeed
+		end
+		if hum.JumpPower ~= wantedJump then
+			hum.JumpPower = wantedJump
+		end
+	end
 end)
 
-UIS.JumpRequest:Connect(function()
-    if infinite and LP.Character then
-        LP.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-    end
+-- ================= INFINITE JUMP =================
+
+UserInputService.JumpRequest:Connect(function()
+	if infJumpBtn:GetAttribute("State") then
+		local hum = getHumanoid()
+		if hum then
+			hum:ChangeState(Enum.HumanoidStateType.Jumping)
+		end
+	end
 end)
 
-local noclip = false
-NoclipBtn.MouseButton1Click:Connect(function()
-    noclip = not noclip
-    NoclipBtn.Text = noclip and "Noclip: ON" or "Noclip"
+-- ================= NOCLIP =================
+
+RunService.Stepped:Connect(function()
+	if noclipBtn:GetAttribute("State") then
+		if player.Character then
+			for _, part in pairs(player.Character:GetDescendants()) do
+				if part:IsA("BasePart") then
+					part.CanCollide = false
+				end
+			end
+		end
+	end
 end)
 
-Run.Stepped:Connect(function()
-    if noclip and LP.Character then
-        for _,v in pairs(LP.Character:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.CanCollide = false
-            end
-        end
-    end
+-- ================= ESP COM CONTORNO =================
+
+local espObjects = {}
+
+local function removeESP(plr)
+	if espObjects[plr] then
+		espObjects[plr]:Destroy()
+		espObjects[plr] = nil
+	end
+end
+
+local function applyESP(plr)
+	if plr == player then return end
+	if not espBtn:GetAttribute("State") then return end
+	if not plr.Character then return end
+
+	removeESP(plr)
+
+	local highlight = Instance.new("Highlight")
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlight.FillTransparency = 1
+	highlight.OutlineTransparency = 0
+	highlight.OutlineColor = plr.Team and plr.Team.TeamColor.Color or Color3.new(1,1,1)
+	highlight.Adornee = plr.Character
+	highlight.Parent = plr.Character
+
+	espObjects[plr] = highlight
+
+	plr:GetPropertyChangedSignal("Team"):Connect(function()
+		if highlight then
+			highlight.OutlineColor = plr.Team and plr.Team.TeamColor.Color or Color3.new(1,1,1)
+		end
+	end)
+end
+
+local function refreshESP()
+	for _,plr in pairs(game.Players:GetPlayers()) do
+		if espBtn:GetAttribute("State") then
+			applyESP(plr)
+		else
+			removeESP(plr)
+		end
+	end
+end
+
+game.Players.PlayerAdded:Connect(function(plr)
+	plr.CharacterAdded:Connect(function()
+		task.wait(1)
+		applyESP(plr)
+	end)
 end)
 
--- WalkSpeed
-SpeedBox.FocusLost:Connect(function()
-    local n = tonumber(SpeedBox.Text)
-    if n and LP.Character then
-        LP.Character.Humanoid.WalkSpeed = n
-    end
+espBtn:GetAttributeChangedSignal("State"):Connect(function()
+	refreshESP()
 end)
 
--- JumpPower
-JumpBox.FocusLost:Connect(function()
-    local n = tonumber(JumpBox.Text)
-    if n and LP.Character then
-        LP.Character.Humanoid.JumpPower = n
-    end
+game:GetService("RunService").Heartbeat:Connect(function()
+	if espBtn:GetAttribute("State") then
+		refreshESP()
+	end
 end)
-
--- ESP Functionality
-local espEnabled = false
-EspBtn.MouseButton1Click:Connect(function()
-    espEnabled = not espEnabled
-    EspBtn.Text = espEnabled and "ESP: ON" or "ESP" -- Atualiza o texto do botão
-
-    -- Função para atualizar o ESP dos jogadores
-    local function updateESP()
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LP then -- Ignora o jogador local
-                local character = player.Character
-                if character then
-                    if espEnabled then
-                        local highlight = Instance.new("Highlight", character) -- Cria um destaque
-                        highlight.FillColor = player.TeamColor.Color -- Define a cor do time
-                        highlight.Adornee = character
-                    else
-                        local highlight = character:FindFirstChildOfClass("Highlight") -- Encontra o destaque
-                        if highlight then
-                            highlight:Destroy() -- Remove o destaque
-                        end
-                    end
-                end
-            end
-        end
-    end
-    
-    -- Conecta a função de atualização ao evento de jogador criado e removido
-    Players.PlayerAdded:Connect(updateESP)
-    Players.PlayerRemoving:Connect(updateESP)
-
-    updateESP() -- Atualiza o ESP imediatamente
-end)
-
--- Atualiza o ESP quando um novo jogador entra
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function(character)
-        updateESP()
-    end)
-end)
-
