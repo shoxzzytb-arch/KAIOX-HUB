@@ -876,3 +876,80 @@ game:GetService("RunService").Heartbeat:Connect(function()
 		refreshESP()
 	end
 end)
+-- ================= AIMBOT =================
+
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+
+local aiming = false
+local currentTarget = nil
+local lastCamCF = Camera.CFrame
+
+local function isAlive(plr)
+	return plr.Character
+	and plr.Character:FindFirstChild("Humanoid")
+	and plr.Character.Humanoid.Health > 0
+	and plr.Character:FindFirstChild("Head")
+end
+
+local function hasLineOfSight(targetHead)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Blacklist
+	params.FilterDescendantsInstances = {player.Character}
+
+	local origin = Camera.CFrame.Position
+	local dir = (targetHead.Position - origin)
+
+	local result = workspace:Raycast(origin, dir, params)
+
+	if result then
+		return result.Instance:IsDescendantOf(targetHead.Parent)
+	end
+
+	return true
+end
+
+local function getClosestTarget()
+	local closest, dist = nil, math.huge
+
+	for _,plr in pairs(game.Players:GetPlayers()) do
+		if plr ~= player and isAlive(plr) then
+			local head = plr.Character.Head
+			local d = (Camera.CFrame.Position - head.Position).Magnitude
+
+			if d < dist and hasLineOfSight(head) then
+				dist = d
+				closest = plr
+			end
+		end
+	end
+
+	return closest
+end
+
+RunService.RenderStepped:Connect(function()
+	if not aimBtn:GetAttribute("State") then
+		currentTarget = nil
+		return
+	end
+
+	-- detectou movimento forte da camera → solta o alvo
+	if (Camera.CFrame.Position - lastCamCF.Position).Magnitude > 1 then
+		currentTarget = nil
+	end
+
+	if not currentTarget or not isAlive(currentTarget) then
+		currentTarget = getClosestTarget()
+	end
+
+	if currentTarget and isAlive(currentTarget) then
+		local head = currentTarget.Character.Head
+		if hasLineOfSight(head) then
+			Camera.CFrame = CFrame.new(Camera.CFrame.Position, head.Position)
+		else
+			currentTarget = nil
+		end
+	end
+
+	lastCamCF = Camera.CFrame
+end)
