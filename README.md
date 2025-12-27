@@ -953,3 +953,69 @@ RunService.RenderStepped:Connect(function()
 
 	lastCamCF = Camera.CFrame
 end)
+-- ================= CONTEÚDO DA PÁGINA CRÉDITOS =================
+
+local RunService = game:GetService("RunService")
+
+local creditsHolder = Instance.new("Frame", extraMenu)
+creditsHolder.Size = UDim2.fromOffset(380,260)
+creditsHolder.Position = UDim2.fromOffset(395,120)
+creditsHolder.BackgroundTransparency = 1
+creditsHolder.Visible = false
+creditsHolder.ZIndex = 20
+
+local creditsBg = Instance.new("Frame", creditsHolder)
+creditsBg.Size = UDim2.fromScale(1,1)
+creditsBg.BackgroundColor3 = Color3.fromRGB(106,43,217)
+creditsBg.BackgroundTransparency = 0.2
+creditsBg.BorderSizePixel = 0
+Instance.new("UICorner", creditsBg).CornerRadius = UDim.new(0,12)
+
+local layout = Instance.new("UIListLayout", creditsBg)
+layout.Padding = UDim.new(0,8)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.VerticalAlignment = Enum.VerticalAlignment.Center
+
+local function creditLabel(text, size)
+	local lbl = Instance.new("TextLabel", creditsBg)
+	lbl.Size = UDim2.fromOffset(340,38)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = text
+	lbl.Font = Enum.Font.FredokaOne
+	lbl.TextSize = size or 22
+	lbl.TextColor3 = Color3.new(1,1,1)
+	lbl.TextWrapped = true
+	lbl.ZIndex = 21
+	return lbl
+end
+
+creditLabel("KAIOX HUB", 32)
+creditLabel("Criador: KAIOXKX")
+creditLabel("YouTube: KAIOXKX")
+
+local fpsLabel = creditLabel("Fps: ...")
+local gameLabel = creditLabel("Jogo: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+
+-- FPS EM TEMPO REAL
+local frames = 0
+local last = tick()
+
+RunService.RenderStepped:Connect(function()
+	frames += 1
+	if tick() - last >= 1 then
+		fpsLabel.Text = "Fps: "..frames
+		frames = 0
+		last = tick()
+	end
+end)
+
+-- ================= AJUSTE DO SISTEMA DE PÁGINAS =================
+
+local oldSelect = selectPage
+function selectPage(name)
+	currentPage = name
+	universalHolder.Visible = (name == "UNIVERSAL")
+	creditsHolder.Visible = (name == "CRÉDITOS")
+end
+
+selectPage("UNIVERSAL")
