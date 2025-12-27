@@ -953,48 +953,67 @@ RunService.RenderStepped:Connect(function()
 
 	lastCamCF = Camera.CFrame
 end)
--- ================= CONTEÚDO DA PÁGINA CRÉDITOS =================
+-- ================= CONTEÚDO DA PÁGINA CRÉDITOS (Informações de tudo) =================
 
 local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local MarketplaceService = game:GetService("MarketplaceService")
 
 local creditsHolder = Instance.new("Frame", extraMenu)
 creditsHolder.Size = UDim2.fromOffset(380,260)
-creditsHolder.Position = UDim2.fromOffset(395,120)
+creditsHolder.Position = UDim2.fromOffset(370,65) -- 25 pra esquerda e 55 pra cima
 creditsHolder.BackgroundTransparency = 1
 creditsHolder.Visible = false
 creditsHolder.ZIndex = 20
 
-local creditsBg = Instance.new("Frame", creditsHolder)
-creditsBg.Size = UDim2.fromScale(1,1)
-creditsBg.BackgroundColor3 = Color3.fromRGB(106,43,217)
-creditsBg.BackgroundTransparency = 0.2
-creditsBg.BorderSizePixel = 0
-Instance.new("UICorner", creditsBg).CornerRadius = UDim.new(0,12)
-
-local layout = Instance.new("UIListLayout", creditsBg)
-layout.Padding = UDim.new(0,8)
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-layout.VerticalAlignment = Enum.VerticalAlignment.Center
+local layout = Instance.new("UIListLayout", creditsHolder)
+layout.Padding = UDim.new(0,6)
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
 
 local function creditLabel(text, size)
-	local lbl = Instance.new("TextLabel", creditsBg)
-	lbl.Size = UDim2.fromOffset(340,38)
+	local lbl = Instance.new("TextLabel", creditsHolder)
+	lbl.Size = UDim2.fromOffset(360,36)
 	lbl.BackgroundTransparency = 1
 	lbl.Text = text
 	lbl.Font = Enum.Font.FredokaOne
 	lbl.TextSize = size or 22
 	lbl.TextColor3 = Color3.new(1,1,1)
-	lbl.TextWrapped = true
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
 	lbl.ZIndex = 21
 	return lbl
 end
 
-creditLabel("KAIOX HUB", 32)
-creditLabel("Criador: KAIOXKX")
-creditLabel("YouTube: KAIOXKX")
+-- TÍTULO RAINBOW
+local title = creditLabel("KAIOX HUB", 32)
+
+-- RAINBOW FRAME A FRAME
+task.spawn(function()
+	local h = 0
+	while title.Parent do
+		h = (h + 0.003) % 1
+		title.TextColor3 = Color3.fromHSV(h,1,1)
+		task.wait()
+	end
+end)
+
+local creator = creditLabel("Criador: KAIOXKX")
+local yt = creditLabel("YouTube: KAIOXKX")
+
+-- RAINBOW NOS TEXTOS
+for _,lbl in ipairs({creator, yt}) do
+	task.spawn(function()
+		local h = 0
+		while lbl.Parent do
+			h = (h + 0.002) % 1
+			lbl.TextColor3 = Color3.fromHSV(h,1,1)
+			task.wait()
+		end
+	end)
+end
 
 local fpsLabel = creditLabel("Fps: ...")
-local gameLabel = creditLabel("Jogo: "..game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+local gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name
+local gameLabel = creditLabel("Jogo: "..gameName)
 
 -- FPS EM TEMPO REAL
 local frames = 0
@@ -1009,7 +1028,44 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
--- ================= AJUSTE DO SISTEMA DE PÁGINAS =================
+-- PERFIL DO JOGADOR
+local profileFrame = Instance.new("Frame", creditsHolder)
+profileFrame.Size = UDim2.fromOffset(360,70)
+profileFrame.BackgroundTransparency = 1
+
+local avatar = Instance.new("ImageLabel", profileFrame)
+avatar.Size = UDim2.fromOffset(55,55)
+avatar.Position = UDim2.fromOffset(0,5)
+avatar.BackgroundTransparency = 1
+Instance.new("UICorner", avatar).CornerRadius = UDim.new(1,0)
+
+local userId = player.UserId
+local thumb = Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+avatar.Image = thumb
+
+local nameLbl = Instance.new("TextLabel", profileFrame)
+nameLbl.Size = UDim2.fromOffset(280,26)
+nameLbl.Position = UDim2.fromOffset(65,6)
+nameLbl.BackgroundTransparency = 1
+nameLbl.Text = player.Name
+nameLbl.Font = Enum.Font.FredokaOne
+nameLbl.TextSize = 20
+nameLbl.TextXAlignment = Enum.TextXAlignment.Left
+nameLbl.TextColor3 = Color3.new(1,1,1)
+
+local dateLbl = Instance.new("TextLabel", profileFrame)
+dateLbl.Size = UDim2.fromOffset(280,26)
+dateLbl.Position = UDim2.fromOffset(65,36)
+dateLbl.BackgroundTransparency = 1
+dateLbl.Font = Enum.Font.FredokaOne
+dateLbl.TextSize = 18
+dateLbl.TextXAlignment = Enum.TextXAlignment.Left
+dateLbl.TextColor3 = Color3.new(1,1,1)
+
+local created = os.date("%d/%m/%Y", os.time() - (player.AccountAge * 86400))
+dateLbl.Text = "Data de entrada: "..created
+
+-- ================= AJUSTE FINAL DAS PÁGINAS =================
 
 local oldSelect = selectPage
 function selectPage(name)
